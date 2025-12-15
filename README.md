@@ -1,0 +1,54 @@
+## PTAB 무효 심판 데이터셋 구축 프로젝트
+
+이 리포지토리는 USPTO Open Data Portal(ODP) v3 API를 활용해 PTAB 무효 심판(Final Written Decision 및 Unpatentable) 사례를 수집·정제하는 파이프라인의 기본 골격을 제공합니다.
+
+### 주요 기능
+- PTAB 결정 검색: `decisionTypeCategory=Final Written Decision`, `trialStatus ∈ {Final Written Decision, Terminated}`, `subdecisionTypeCategory ∈ {Unpatentable, Claims Unpatentable}`, `prosecutionStatus=Certificate Issued` 필터를 기본 적용.
+- 결정문 다운로드: 사건별 문서 목록에서 `documentTypeDescriptionText=Final Written Decision`을 찾아 PDF/텍스트를 병렬로 수집.
+- 본문 추출·파싱: PDF 텍스트 추출 후 35 U.S.C. §102/§103/§112 키워드 및 무효 청구항을 1차 규칙 기반 태깅.
+- 데이터 적재: 정제된 메타데이터와 본문을 로컬 `data/` 디렉토리에 JSONL/Parquet 형태로 저장하도록 설계(기본 예시는 JSONL).
+
+### 디렉토리 구조
+```
+src/ptab_dataset/
+  ├── config.py           # 환경 변수/기본 상수
+  ├── api.py              # ODP v3 API 호출 유틸
+  ├── downloader.py       # 결정문 다운로드 및 해시
+  ├── parser.py           # 텍스트 추출 및 규칙 기반 파싱
+  ├── storage.py          # 로컬 저장/체크포인트 유틸
+  └── pipeline.py         # 엔드 투 엔드 파이프라인 진입점
+data/
+  ├── raw/                # 원본 API 응답, PDF
+  └── processed/          # 정제된 JSONL/Parquet
+```
+
+### 빠른 시작
+1) 의존성 설치
+```
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+2) 환경 변수 설정  
+`env.example`을 `.env`로 복사한 뒤 `USPTO_API_KEY`를 채웁니다.
+
+3) 실행 예시 (드라이런)  
+```
+python -m ptab_dataset.pipeline --since 2024-01-01 --max-pages 2 --dry-run
+```
+
+### 데이터 스키마(요약)
+- `trial_number`, `patent_number`, `decision_date`, `decision_type`, `subdecision_type`, `trial_status`, `prosecution_status`
+- `claims_unpatentable` (리스트), `statute_basis`(예: ["102","103"]), `cited_prior_art`(문헌 ID 리스트), `petitioner`, `respondent`, `panel_judges`
+- `document_url`, `document_sha256`, `text_extracted`, `token_count`
+
+### 안전 장치
+- 429/5xx 대응: 지수 백오프 및 페이지 체크포인트.
+- 중복 방지: 문서 해시(`sha256`)로 저장 전 중복 제거.
+- 부분 실패 대응: 다운로드/파싱 실패 시 재시도 큐에 기록(`data/raw/retry_queue.jsonl`).
+
+### 참고
+- 결정 검색: https://data.uspto.gov/apis/ptab-trials/search-decisions
+- 문서 다운로드: https://data.uspto.gov/apis/ptab-trials/download-decisions
+
