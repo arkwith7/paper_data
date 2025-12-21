@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+
+.env
+env
+
+data/raw/
+data/processed/
+
+.pytest_cache/
+.mypy_cache/
+
+# 연구 문서(비공개)
+Live-APAS\ Research\ Proposal.pdf
+# 일부 환경에서 한글 파일명이 정규화(NFC/NFD) 차이로 매칭이 어긋날 수 있어 접두어 패턴도 함께 무시
+PTAB*.pdf
+*.pdf
+

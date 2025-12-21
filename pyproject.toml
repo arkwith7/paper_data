@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptab-dataset"
+version = "0.1.0"
+description = "PTAB 무효 심판 데이터셋 구축 파이프라인(USPTO ODP v3 + 선택적 PatentsView 보강)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "python-dotenv>=1.0.1",
+  "requests>=2.32.3",
+  "tqdm>=4.66.5",
+  "rich>=13.7.1",
+  "pydantic>=2.9.2",
+  "tenacity>=8.5.0",
+  "pypdf>=4.3.1",
+  "rapidfuzz>=3.10.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

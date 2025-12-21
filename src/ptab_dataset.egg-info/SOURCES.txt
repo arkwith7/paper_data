@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/ptab_dataset/__init__.py
+src/ptab_dataset/api.py
+src/ptab_dataset/config.py
+src/ptab_dataset/downloader.py
+src/ptab_dataset/parser.py
+src/ptab_dataset/patentsview.py
+src/ptab_dataset/pipeline.py
+src/ptab_dataset/storage.py
+src/ptab_dataset.egg-info/PKG-INFO
+src/ptab_dataset.egg-info/SOURCES.txt
+src/ptab_dataset.egg-info/dependency_links.txt
+src/ptab_dataset.egg-info/requires.txt
+src/ptab_dataset.egg-info/top_level.txt
