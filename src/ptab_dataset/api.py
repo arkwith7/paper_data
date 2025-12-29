@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import json
 from typing import Any, Dict, Iterable, Optional
 
 import requests
@@ -62,7 +63,9 @@ class PTABClient:
             filters.extend(extra_filters)
 
         params = {
-            "filters": filters,
+            # requests는 list/dict를 쿼리스트링으로 보낼 때 반복 파라미터로 인코딩할 수 있어
+            # API가 기대하는 JSON 문자열 형식으로 명시적으로 직렬화합니다.
+            "filters": json.dumps(filters, ensure_ascii=False),
             "page": page,
             "rows": rows,
         }

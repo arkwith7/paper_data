@@ -1,4 +1,4 @@
-#!/home/arkwith/SKKU/paper_data/.venv/bin/python
+#!/home/arkwith/Dev/paper_data/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -6,4 +6,6 @@ pydantic>=2.9.2
 tenacity>=8.5.0
 pypdf>=4.3.1
 rapidfuzz>=3.10.0
+xmltodict>=0.13.0
+
 

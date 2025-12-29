@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
+.ipynb_checkpoints/
 
 .env
 env
@@ -10,6 +11,9 @@ data/processed/
 
 .pytest_cache/
 .mypy_cache/
+*.egg-info/
+build/
+dist/
 
 # 연구 문서(비공개)
 Live-APAS\ Research\ Proposal.pdf

@@ -13,61 +13,79 @@ Requires-Dist: tenacity>=8.5.0
 Requires-Dist: pypdf>=4.3.1
 Requires-Dist: rapidfuzz>=3.10.0
 
-## PTAB 무효 심판 데이터셋 구축 프로젝트
+## Live-APAS 연구 재현성 프로젝트 (Paper Companion Repo)
 
-이 리포지토리는 USPTO Open Data Portal(ODP) v3 API를 활용해 PTAB 무효 심판(Final Written Decision 및 Unpatentable) 사례를 수집·정제하는 파이프라인의 기본 골격을 제공합니다.
+이 프로젝트는 `Live-APAS Research Proposal.pdf`(“**Live-APAS: Autonomous Prior Art Search / 실시간 자율 선행기술 조사 및 Agentic RAG 기반 지식 탐색 시스템 연구**”)의 **논문/연구 제안서 작성 및 재현성 증명**을 위해 시작되었습니다.
 
-### 주요 기능
-- PTAB 결정 검색: `decisionTypeCategory=Final Written Decision`, `trialStatus ∈ {Final Written Decision, Terminated}`, `subdecisionTypeCategory ∈ {Unpatentable, Claims Unpatentable}`, `prosecutionStatus=Certificate Issued` 필터를 기본 적용.
-- 결정문 다운로드: 사건별 문서 목록에서 `documentTypeDescriptionText=Final Written Decision`을 찾아 PDF/텍스트를 병렬로 수집.
-- 본문 추출·파싱: PDF 텍스트 추출 후 35 U.S.C. §102/§103/§112 키워드 및 무효 청구항을 1차 규칙 기반 태깅.
-- 데이터 적재: 정제된 메타데이터와 본문을 로컬 `data/` 디렉토리에 JSONL/Parquet 형태로 저장하도록 설계(기본 예시는 JSONL).
+핵심 목표는 다음과 같습니다.
+- **데이터 수집 재현성**: 동일 설정으로 동일 데이터(또는 동일한 수집 스냅샷)를 다시 만들 수 있도록 파이프라인/노트북/설정을 체계화
+- **실험 재현성**: 검색/랭킹/파싱 결과를 “코드+설정+산출물”로 묶어 재현 가능하게 관리
+- **추적 가능성(provenance)**: 어떤 소스에서 어떤 조건으로 수집했는지(시간/쿼리/버전/해시)를 남김
 
-### 디렉토리 구조
+현재 구현은 “Agentic AI 특허 검색” 개발 전 단계로서, **특허 데이터 수집·정제 절차를 검증하는 도구 세트**에 초점을 둡니다.
+
+### 현재 포함된 구성요소
+- **PatentsView(USPTO 특허 검색)**: PatentsView PatentSearch API로 특허를 검색/수집하는 노트북
+  - 노트북: `notebooks/00_patentsview_patentsearch_quickstart.ipynb`
+- **KIPRIS(국내 특허 검색)**: KIPRIS OpenAPI로 특허를 검색/수집하는 노트북
+  - 노트북: `notebooks/01_kipris_openapi_quickstart.ipynb`
+- **PTAB 무효 심판(미국 IPR 등) 데이터셋 파이프라인 골격**: PTAB 결정/문서를 수집·정제하는 파이프라인(향후 논문 실험 데이터로 확장)
+  - 코드: `src/ptab_dataset/` (`pipeline.py` 등)
+
+### 재현성 운영 원칙(향후 코드/데이터 추가 시 기준)
+- **환경 고정**: 의존성은 `pyproject.toml` / `requirements*.txt`로 관리하고, 실험 시 Python 버전과 패키지 버전을 기록
+- **설정 분리**: 모든 비밀/키/환경별 값은 `env` 또는 `.env`로만 관리(레포 커밋 금지)
+- **산출물 표준화**: 모든 수집/정제 결과는 `data/processed/` 아래에 “실험/쿼리/날짜”가 드러나는 파일명으로 저장
+- **원본/정제 분리**: 원본 응답/문서(`data/raw`)와 정제 결과(`data/processed`)를 분리 저장
+- **프로비넌스 기록**: (향후 추가 예정) 실행 시점, 요청 파라미터, 응답 해시/샘플 수를 JSONL 메타로 함께 저장
+
+### 디렉토리 구조(요약)
 ```
-src/ptab_dataset/
-  ├── config.py           # 환경 변수/기본 상수
-  ├── api.py              # ODP v3 API 호출 유틸
-  ├── downloader.py       # 결정문 다운로드 및 해시
-  ├── parser.py           # 텍스트 추출 및 규칙 기반 파싱
-  ├── storage.py          # 로컬 저장/체크포인트 유틸
-  └── pipeline.py         # 엔드 투 엔드 파이프라인 진입점
+src/
+  ptab_dataset/              # PTAB(USPTO ODP) 수집/정제 파이프라인
+notebooks/
+  00_patentsview_patentsearch_quickstart.ipynb
+  01_kipris_openapi_quickstart.ipynb
 data/
-  ├── raw/                # 원본 API 응답, PDF
-  └── processed/          # 정제된 JSONL/Parquet
+  raw/                       # 원본 응답/문서(기본적으로 git에 커밋하지 않음)
+  processed/                 # 정제 산출물(JSONL 등)
 ```
 
-### 빠른 시작
+### 빠른 시작(재현 실행)
 1) 의존성 설치
 ```
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-notebook.txt
 pip install -e .
 ```
 
-2) 환경 변수 설정  
-`env.example`을 `.env`로 복사한 뒤 `USPTO_API_KEY`를 채웁니다.
+2) 환경 변수 설정
+- `env.example`을 `env` 또는 `.env`로 복사하고 필요한 키를 채웁니다.
+  - PatentsView: `PATENTSVIEW_API_KEY`
+  - KIPRIS: `KIPRIS_API_KEY`
+  - (선택) PTAB ODP: `USPTO_API_KEY`
 
-> 참고: PatentsView PatentSearch API 키는 `PATENTSVIEW_API_KEY`에 별도로 저장합니다(PTAB ODP 키와 호환되지 않음).
-> 또한 API 키는 레포/문서/로그에 커밋하지 말고, 노출되었다면 즉시 폐기(rotate) 후 재발급을 권장합니다.
+> 주의: API 키는 레포/문서/로그에 커밋하지 말고, 노출되었다면 즉시 폐기(rotate) 후 재발급을 권장합니다.
 
-3) 실행 예시 (드라이런)  
+3) 노트북 실행
+- PatentsView: `notebooks/00_patentsview_patentsearch_quickstart.ipynb`
+- KIPRIS: `notebooks/01_kipris_openapi_quickstart.ipynb`
+
+4) (선택) PTAB 파이프라인 실행 예시(드라이런)
 ```
 python -m ptab_dataset.pipeline --since 2024-01-01 --max-pages 2 --dry-run
 ```
 
-### 데이터 스키마(요약)
-- `trial_number`, `patent_number`, `decision_date`, `decision_type`, `subdecision_type`, `trial_status`, `prosecution_status`
-- `claims_unpatentable` (리스트), `statute_basis`(예: ["102","103"]), `cited_prior_art`(문헌 ID 리스트), `petitioner`, `respondent`, `panel_judges`
-- `document_url`, `document_sha256`, `text_extracted`, `token_count`
+### 출력(산출물)
+- PatentsView 샘플 결과: `data/processed/patentsview_*_sample.jsonl`
+- KIPRIS 샘플 결과: `data/processed/kipris_*_sample.jsonl`
+- PTAB 결과(페이지 단위): `data/processed/decisions_page_*.jsonl`
 
-### 안전 장치
-- 429/5xx 대응: 지수 백오프 및 페이지 체크포인트.
-- 중복 방지: 문서 해시(`sha256`)로 저장 전 중복 제거.
-- 부분 실패 대응: 다운로드/파싱 실패 시 재시도 큐에 기록(`data/raw/retry_queue.jsonl`).
-
-### 참고
-- 결정 검색: https://data.uspto.gov/apis/ptab-trials/search-decisions
-- 문서 다운로드: https://data.uspto.gov/apis/ptab-trials/download-decisions
+### 참고 링크
+- PatentsView PatentSearch 문서: `https://search.patentsview.org/docs/`
+- KIPRIS Plus API 통합설명서: `https://plus.kipris.or.kr/portal/bbs/view.do?bbsId=B0000004&delCode=&edate=&menuNo=&nttId=858&pageIndex=1&replyAt=&sdate=&searchCnd=&searchWrd=&section=&useAt=&viewType=`
+- mcp_kipris(오픈소스): `https://github.com/nuri428/mcp_kipris`
+- USPTO PTAB ODP 결정 검색: `https://data.uspto.gov/apis/ptab-trials/search-decisions`
 
